@@ -236,29 +236,7 @@
 
   .error-msg.visible { display: block; }
 
-  .tabs {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1.75rem;
-  }
 
-  .tab {
-    padding: 0.4rem 1.1rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    background: transparent;
-    transition: all 0.15s;
-  }
-
-  .tab.active {
-    background: var(--accent);
-    color: #0f0f1a;
-    border-color: transparent;
-  }
 
   /* Download view */
   .download-view {
@@ -339,10 +317,7 @@
   <p>Google Drive &mdash; Descarga con clave</p>
 </header>
 
-<div class="tabs" id="main-tabs">
-  <button class="tab active" onclick="switchTab('gen')">Generar QR</button>
-  <button class="tab" onclick="switchTab('scan')">Simular escaneo</button>
-</div>
+
 
 <!-- ===== GENERADOR ===== -->
 <div id="gen-view">
@@ -422,7 +397,6 @@
     const fname  = params.get('f');
     const url    = params.get('u');
     if (fname && url) {
-      document.getElementById('main-tabs').style.display = 'none';
       document.getElementById('gen-view').style.display  = 'none';
       showDownloadView(fname, url);
     }
@@ -462,7 +436,7 @@
     currentFile = fname;
     currentURL  = url;
 
-    const pageURL = window.location.href.split('?')[0];
+    const pageURL = 'https://rcastroavendano-sudo.github.io/qr-gdrive';
     const qrURL   = `${pageURL}?f=${encodeURIComponent(fname)}&u=${encodeURIComponent(url)}`;
 
     const container = document.getElementById('qr-container');
@@ -518,26 +492,7 @@
     return url;
   }
 
-  function switchTab(tab) {
-    document.querySelectorAll('.tab').forEach((t, i) => {
-      t.classList.toggle('active', (i === 0 && tab === 'gen') || (i === 1 && tab === 'scan'));
-    });
 
-    if (tab === 'gen') {
-      document.getElementById('gen-view').style.display = '';
-      document.getElementById('dl-view').classList.remove('visible');
-    } else {
-      if (!currentFile || !currentURL) {
-        alert('Primero genera un QR en la pestaña "Generar QR".');
-        switchTab('gen');
-        return;
-      }
-      document.getElementById('gen-view').style.display = 'none';
-      document.getElementById('dl-key').value = '';
-      document.getElementById('wrong-key-msg').classList.remove('visible');
-      showDownloadView(currentFile, currentURL);
-    }
-  }
 
   function printQR() {
     const container = document.getElementById('qr-container');
