@@ -76,7 +76,7 @@
     margin-bottom: 0.35rem;
   }
 
-  input[type="text"], input[type="text"] {
+  input[type="text"], input[type="password"] {
     width: 100%;
     background: var(--surface2);
     border: 1px solid var(--border);
@@ -379,7 +379,7 @@
 
   <div class="card" style="width:100%;max-width:360px;">
     <label>Ingresa la clave para descargar</label>
-    <input type="password" id="dl-key" placeholder="Nombre del archivo..." onkeydown="if(event.key==='Enter') checkKey()">
+    <input type="text" id="dl-key" placeholder="Nombre del archivo..." onkeydown="if(event.key==='Enter') checkKey()">
     <p class="wrong-key" id="wrong-key-msg">Clave incorrecta. Intenta de nuevo.</p>
     <button class="btn-download" onclick="checkKey()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
