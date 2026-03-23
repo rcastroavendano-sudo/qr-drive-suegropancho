@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Generator — Google Drive</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --surface: #1a1a2e;
+    --surface2: #16213e;
+    --accent: #00d4ff;
+    --accent2: #e94560;
+    --text: #e8e8f0;
+    --text-muted: #7a7a9a;
+    --border: rgba(0, 212, 255, 0.15);
+    --border-hover: rgba(0, 212, 255, 0.35);
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  header h1 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+
+  header p {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top: 0.4rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 520px;
+    margin-bottom: 1.25rem;
+  }
+
+  .card h2 {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 1.1rem;
+  }
+
+  label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+  }
+
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.9rem;
+    padding: 0.6rem 0.8rem;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 1rem;
+  }
+
+  input[type="text"]:focus, input[type="password"]:focus {
+    border-color: var(--accent);
+  }
+
+  input[type="text"]::placeholder, input[type="password"]::placeholder {
+    color: var(--text-muted);
+  }
+
+  .file-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 0.5rem;
+    align-items: stretch;
+  }
+
+  .file-row input[type="text"] {
+    flex: 1;
+    margin-bottom: 0;
+    cursor: default;
+  }
+
+  .btn-browse {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 1rem;
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid var(--border-hover);
+    border-radius: 8px;
+    color: var(--accent);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+
+  .btn-browse:hover { background: rgba(0, 212, 255, 0.2); }
+
+  #file-input { display: none; }
+
+  .file-info {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    min-height: 1.1rem;
+    padding-left: 2px;
+  }
+
+  .file-info.ok { color: #4ade80; }
+
+  .hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: -0.7rem;
+    margin-bottom: 1rem;
+    line-height: 1.55;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255,255,255,0.03);
+    border-left: 2px solid var(--border-hover);
+    border-radius: 0 6px 6px 0;
+  }
+
+  .hint strong { color: var(--text); font-weight: 600; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.4rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0f0f1a;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-primary:hover { opacity: 0.88; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid rgba(0,212,255,0.4);
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.75rem;
+  }
+
+  .btn-secondary:hover { background: rgba(0, 212, 255, 0.08); }
+
+  .qr-section {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .qr-section.visible { display: flex; }
+
+  #qr-container {
+    background: #fff;
+    border-radius: 10px;
+    padding: 14px;
+    display: inline-block;
+  }
+
+  .qr-meta { text-align: center; }
+
+  .qr-meta .filename {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-all;
+  }
+
+  .qr-meta .key-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+  }
+
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin: 0.25rem 0 0.5rem;
+  }
+
+  .error-msg {
+    font-size: 0.8rem;
+    color: var(--accent2);
+    margin-bottom: 0.75rem;
+    display: none;
+  }
+
+  .error-msg.visible { display: block; }
+
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .tab {
+    padding: 0.4rem 1.1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    background: transparent;
+    transition: all 0.15s;
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: #0f0f1a;
+    border-color: transparent;
+  }
+
+  /* Download view */
+  .download-view {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    max-width: 380px;
+    gap: 1.1rem;
+  }
+
+  .download-view.visible { display: flex; }
+
+  .file-icon-big {
+    width: 68px;
+    height: 68px;
+    border-radius: 18px;
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid var(--border-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+  }
+
+  .download-view h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    word-break: break-all;
+    line-height: 1.4;
+  }
+
+  .lock-badge {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.3rem 0.9rem;
+  }
+
+  .btn-download {
+    background: var(--accent);
+    color: #0f0f1a;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.8rem 2rem;
+    border-radius: 10px;
+    width: 100%;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.15s;
+  }
+
+  .btn-download:hover { opacity: 0.88; }
+  .btn-download:active { transform: scale(0.97); }
+
+  .wrong-key {
+    color: var(--accent2);
+    font-size: 0.82rem;
+    display: none;
+    margin-top: -0.6rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .wrong-key.visible { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>QR Generator</h1>
+  <p>Google Drive &mdash; Descarga con clave</p>
+</header>
+
+<div class="tabs" id="main-tabs">
+  <button class="tab active" onclick="switchTab('gen')">Generar QR</button>
+  <button class="tab" onclick="switchTab('scan')">Simular escaneo</button>
+</div>
+
+<!-- ===== GENERADOR ===== -->
+<div id="gen-view">
+
+  <div class="card">
+    <h2>Paso 1 — Selecciona el archivo</h2>
+
+    <label>Archivo en tu PC (incluye carpeta de Google Drive)</label>
+    <div class="file-row">
+      <input type="text" id="filename" placeholder="Nombre del archivo..." readonly>
+      <button class="btn-browse" onclick="document.getElementById('file-input').click()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Examinar
+      </button>
+    </div>
+    <input type="file" id="file-input" onchange="onFileSelected(this)">
+    <div class="file-info" id="file-info">Navega hasta tu carpeta de Google Drive y selecciona el archivo</div>
+  </div>
+
+  <div class="card">
+    <h2>Paso 2 — URL de Google Drive</h2>
+
+    <label>Enlace compartido del archivo</label>
+    <input type="text" id="driveurl" placeholder="https://drive.google.com/file/d/..." oninput="clearError()">
+
+    <div class="hint">
+      En <strong>drive.google.com</strong>: clic derecho al archivo &rarr; <strong>Compartir</strong> &rarr; cambiar a <strong>"Cualquiera con el enlace"</strong> &rarr; <strong>Copiar enlace</strong> &rarr; pegar aquí
+    </div>
+
+    <p class="error-msg" id="gen-error"></p>
+
+    <button class="btn btn-primary" onclick="generateQR()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="4" height="4"/></svg>
+      Generar QR
+    </button>
+  </div>
+
+  <!-- Resultado QR -->
+  <div class="card qr-section" id="qr-output">
+    <h2>QR listo</h2>
+    <div id="qr-container"></div>
+    <div class="qr-meta">
+      <div class="filename" id="qr-filename-label"></div>
+      <div class="key-hint">Clave al escanear = nombre del archivo</div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn btn-secondary" onclick="printQR()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Imprimir / Guardar como imagen
+    </button>
+  </div>
+</div>
+
+<!-- ===== DESCARGA ===== -->
+<div class="download-view" id="dl-view">
+  <div class="file-icon-big">&#128196;</div>
+  <h2 id="dl-filename">archivo</h2>
+  <div class="lock-badge">&#128274;&nbsp; Protegido con clave</div>
+
+  <div class="card" style="width:100%;max-width:360px;">
+    <label>Ingresa la clave para descargar</label>
+    <input type="password" id="dl-key" placeholder="Nombre del archivo..." onkeydown="if(event.key==='Enter') checkKey()">
+    <p class="wrong-key" id="wrong-key-msg">Clave incorrecta. Intenta de nuevo.</p>
+    <button class="btn-download" onclick="checkKey()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Descargar archivo
+    </button>
+  </div>
+</div>
+
+<script>
+  let currentFile = '';
+  let currentURL  = '';
+
+  function init() {
+    const params = new URLSearchParams(window.location.search);
+    const fname  = params.get('f');
+    const url    = params.get('u');
+    if (fname && url) {
+      document.getElementById('main-tabs').style.display = 'none';
+      document.getElementById('gen-view').style.display  = 'none';
+      showDownloadView(fname, url);
+    }
+  }
+
+  function onFileSelected(input) {
+    if (!input.files || !input.files[0]) return;
+    const name = input.files[0].name;
+    document.getElementById('filename').value = name;
+    const info = document.getElementById('file-info');
+    info.textContent = '✓  ' + name + '  —  el nombre será la clave de descarga';
+    info.className = 'file-info ok';
+    clearError();
+  }
+
+  function generateQR() {
+    const fname = document.getElementById('filename').value.trim();
+    const url   = document.getElementById('driveurl').value.trim();
+    const errEl = document.getElementById('gen-error');
+
+    if (!fname) {
+      errEl.textContent = 'Primero selecciona un archivo.';
+      errEl.classList.add('visible');
+      return;
+    }
+    if (!url) {
+      errEl.textContent = 'Pega la URL de Google Drive del archivo.';
+      errEl.classList.add('visible');
+      return;
+    }
+    if (!url.includes('drive.google.com') && !url.startsWith('http')) {
+      errEl.textContent = 'La URL no parece válida. Verifica que sea de drive.google.com.';
+      errEl.classList.add('visible');
+      return;
+    }
+
+    currentFile = fname;
+    currentURL  = url;
+
+    const pageURL = window.location.href.split('?')[0];
+    const qrURL   = `${pageURL}?f=${encodeURIComponent(fname)}&u=${encodeURIComponent(url)}`;
+
+    const container = document.getElementById('qr-container');
+    container.innerHTML = '';
+
+    new QRCode(container, {
+      text: qrURL,
+      width: 220,
+      height: 220,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+
+    document.getElementById('qr-filename-label').textContent = fname;
+    const qrOut = document.getElementById('qr-output');
+    qrOut.classList.add('visible');
+    setTimeout(() => qrOut.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  }
+
+  function clearError() {
+    const errEl = document.getElementById('gen-error');
+    errEl.textContent = '';
+    errEl.classList.remove('visible');
+  }
+
+  function showDownloadView(fname, url) {
+    currentFile = fname;
+    currentURL  = url;
+    document.getElementById('dl-filename').textContent = fname;
+    document.getElementById('dl-view').classList.add('visible');
+  }
+
+  function checkKey() {
+    const input = document.getElementById('dl-key').value.trim();
+    const msg   = document.getElementById('wrong-key-msg');
+    if (input === currentFile) {
+      msg.classList.remove('visible');
+      window.location.href = convertDriveURL(currentURL);
+    } else {
+      msg.classList.add('visible');
+      document.getElementById('dl-key').value = '';
+      document.getElementById('dl-key').focus();
+    }
+  }
+
+  function convertDriveURL(url) {
+    // Extrae el file ID y convierte a link de descarga directa
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (match) {
+      return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+    }
+    return url;
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', (i === 0 && tab === 'gen') || (i === 1 && tab === 'scan'));
+    });
+
+    if (tab === 'gen') {
+      document.getElementById('gen-view').style.display = '';
+      document.getElementById('dl-view').classList.remove('visible');
+    } else {
+      if (!currentFile || !currentURL) {
+        alert('Primero genera un QR en la pestaña "Generar QR".');
+        switchTab('gen');
+        return;
+      }
+      document.getElementById('gen-view').style.display = 'none';
+      document.getElementById('dl-key').value = '';
+      document.getElementById('wrong-key-msg').classList.remove('visible');
+      showDownloadView(currentFile, currentURL);
+    }
+  }
+
+  function printQR() {
+    const container = document.getElementById('qr-container');
+    const canvas = container.querySelector('canvas');
+    const img    = container.querySelector('img');
+    let dataURL;
+
+    if (canvas) {
+      dataURL = canvas.toDataURL('image/png');
+    } else if (img) {
+      dataURL = img.src;
+    } else {
+      alert('Genera el QR primero.');
+      return;
+    }
+
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html>
+<html><head><title>QR - ${currentFile}</title>
+<style>
+  body{display:flex;flex-direction:column;align-items:center;justify-content:center;
+       min-height:100vh;font-family:'Segoe UI',sans-serif;background:#fff;gap:12px;}
+  img{width:280px;height:280px;}
+  .name{font-size:15px;font-weight:600;color:#111;}
+  .hint{font-size:12px;color:#888;}
+  button{margin-top:8px;padding:8px 20px;cursor:pointer;font-size:13px;}
+  @media print{button{display:none;}}
+</style></head>
+<body>
+  <img src="${dataURL}" alt="QR">
+  <div class="name">${currentFile}</div>
+  <div class="hint">Clave: nombre del archivo</div>
+  <button onclick="window.print()">Imprimir</button>
+<\/body><\/html>`);
+    win.document.close();
+    setTimeout(() => win.print(), 500);
+  }
+
+  init();
+</script>
+</body>
+</html>
